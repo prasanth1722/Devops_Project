@@ -1,3 +1,5 @@
+
+#comment
 import sys
 import pygame
 from random import choice
