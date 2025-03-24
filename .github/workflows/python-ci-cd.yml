@@ -51,7 +51,72 @@ jobs:
           # Kill the Xvfb process after the test
           pkill Xvfb
 
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}  # Set your GCP project ID in GitHub Secrets
+          service_account_key: ${{ secrets.GCP_SA_KEY }}  # Set your GCP service account key in GitHub Secrets
 
+      - name: Deploy to Google Cloud App Engine
+        run: |
+          gcloud app deploy --quiet  # Deploy to App Engine
+
+
+
+# name: Python CI/CD Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - main  
+#   pull_request:
+#     branches:
+#       - main
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.10"  # Change if needed
+
+#       - name: Install Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+
+#       - name: Install xvfb for headless display
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y xvfb
+
+#       - name: Run Snake Game (Headless Mode)
+#         run: |
+#           # Start xvfb in the background
+#           Xvfb :99 -screen 0 1280x1024x24 &
+
+#           # Set the DISPLAY environment variable for headless mode
+#           export DISPLAY=:99
+
+#           # Run the Snake game
+#           python snake.py &
+          
+#           # Give it some time to run
+#           sleep 10
+
+#           # Kill the Snake game process
+#           pkill -f snake.py
+
+#           # Kill the Xvfb process after the test
+#           pkill Xvfb
+
+# ---------------------------------------------------------------------------------------------------
 
 # name: Python CI/CD Pipeline
 
