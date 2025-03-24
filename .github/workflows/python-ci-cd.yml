@@ -29,6 +29,8 @@ jobs:
       - name: Run Snake Game (Headless Mode)
         run: |
           python snake.py
+          sleep 10
+          pkill -f snake.py
 
 #   deploy:
 #    needs: build
