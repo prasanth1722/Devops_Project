@@ -1,3 +1,58 @@
+# name: Python CI/CD Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - main  
+#   pull_request:
+#     branches:
+#       - main
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.10"  # Change if needed
+
+#       - name: Install Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+
+#   deploy:
+#    needs: build
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.10"
+
+#       - name: Install Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+
+#       - name: Run Snake Game (Headless Mode)
+#         run: |
+#           python snake.py
+
+#       - name: Deploy Application
+#         run: echo "Deployment steps go here"
+
+
+
 name: Python CI/CD Pipeline
 
 on:
@@ -26,8 +81,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run Snake Game (Headless Mode)
+        run: |
+          python snake.py
+
   deploy:
-   needs: build
+    needs: build  # Ensure the build job completes successfully before deploying
     runs-on: ubuntu-latest
 
     steps:
@@ -44,9 +103,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Snake Game (Headless Mode)
+      - name: Build Static Files (Optional)
         run: |
-          python snake.py
+          # If your game generates static files (e.g., HTML, JS), build them here
+          echo "Building static files..."
 
-      - name: Deploy Application
-        run: echo "Deployment steps go here"
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./  # Change this to the directory containing your static files
+          keep_files: true  # Keep existing files in the gh-pages branch
