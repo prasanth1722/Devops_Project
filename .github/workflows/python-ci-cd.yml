@@ -50,7 +50,7 @@ jobs:
     export SDL_AUDIODRIVER=dummy
     
     # Debug: Check environment variables
-    echo "Environment variables:"
+    echo "Environment variables testing:"
     printenv
     
     # Run with verbose output and timeout
