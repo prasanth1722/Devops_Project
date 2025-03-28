@@ -30,16 +30,39 @@ jobs:
       - name: Install xvfb and sound dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libasound2-dev
+          sudo apt-get install -y xvfb libasound2-dev python3-tk python3-dev
 
       - name: Run Snake Game (Headless Mode)
         run: |
-          Xvfb :99 -screen 0 1280x1024x24 -ac -nolisten tcp >/dev/null 2>&1 &
+          # Start Xvfb with more verbose logging
+          Xvfb :99 -screen 0 1280x1024x24 -ac -nolisten tcp &
+          XPID=$!
           export DISPLAY=:99
           export SDL_AUDIODRIVER=dummy
-          echo "Starting snake game in headless mode..."
-          timeout 20s python snake.py || echo "Game completed"
-          pkill -f Xvfb
+          
+          # Debug: Check Xvfb is running
+          ps -p $XPID >/dev/null && echo "Xvfb running (PID $XPID)" || echo "Xvfb failed to start"
+          
+          # Run game with timeout and debug output
+          echo "Starting snake game..."
+          set -x  # Enable debug output
+          python -v snake.py &
+          GPID=$!
+          
+          # Wait for maximum 20 seconds
+          for i in {1..20}; do
+            if ! ps -p $GPID >/dev/null; then
+              echo "Game exited normally"
+              break
+            fi
+            sleep 1
+            echo "Waiting... ($i seconds elapsed)"
+          done
+          
+          # Cleanup
+          kill -9 $GPID 2>/dev/null || true
+          kill -9 $XPID 2>/dev/null || true
+          echo "Test completed"
 
   deploy:
     name: Deploy to GCP
