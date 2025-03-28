@@ -33,22 +33,36 @@ jobs:
           sudo apt-get install -y xvfb libasound2-dev
 
       - name: Run Snake Game (Headless Mode)
-        run: |
-          # Start xvfb with reduced output
-          Xvfb :99 -screen 0 1280x1024x24 -ac -nolisten tcp >/dev/null 2>&1 &
-          export DISPLAY=:99
-          
-          # Suppress ALSA warnings
-          export SDL_AUDIODRIVER=dummy
-          
-          # Run the game with timeout
-          echo "Starting snake game in headless mode..."
-          if ! timeout 10s python snake.py; then
-              echo "Game exited with status $?"
-          fi
-          
-          # Clean up
-          pkill -f Xvfb
+  run: |
+    # Debug: List display devices
+    echo "Current displays:"
+    ls /tmp/.X11-unix/
+    
+    # Start xvfb
+    Xvfb :99 -screen 0 1280x1024x24 -ac -nolisten tcp >/dev/null 2>&1 &
+    export DISPLAY=:99
+    
+    # Verify Xvfb is running
+    echo "Xvfb processes:"
+    ps aux | grep Xvfb
+    
+    # Set dummy audio driver
+    export SDL_AUDIODRIVER=dummy
+    
+    # Debug: Check environment variables
+    echo "Environment variables:"
+    printenv
+    
+    # Run with verbose output and timeout
+    echo "Starting snake game in headless mode..."
+    set -x  # Enable debug output
+    if ! timeout 20s python -v snake.py; then
+        echo "Game exited with status $?"
+    fi
+    set +x
+    
+    # Clean up
+    pkill -f Xvfb
 
   deploy:
     name: Deploy to GCP
