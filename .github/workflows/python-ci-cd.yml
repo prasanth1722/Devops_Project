@@ -83,21 +83,26 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          # Set project
-          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
-          
-          # Build and submit
-          gcloud builds submit \
+          # Explicitly set permissions
+          gcloud projects add-iam-policy-binding ${{ secrets.GCP_PROJECT_ID }} \
+            --member="serviceAccount:${{ secrets.GCP_PROJECT_NUMBER }}@cloudbuild.gserviceaccount.com" \
+            --role="roles/storage.admin"
+
+          gcloud iam service-accounts add-iam-policy-binding \
+            ${{ secrets.GCP_PROJECT_NUMBER }}@cloudbuild.gserviceaccount.com \
+            --member="serviceAccount:github-snake-game@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --role="roles/iam.serviceAccountUser"
+
+          # Build and deploy
+          gcloud builds submit . \
             --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game \
             --timeout=20m
-          
-          # Deploy
+
           gcloud run deploy snake-game \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game \
             --platform managed \
             --region us-central1 \
-            --allow-unauthenticated \
-            --timeout=10m
+            --allow-unauthenticated
 
 #----------------------------------------------------------------------------------------------------
 
