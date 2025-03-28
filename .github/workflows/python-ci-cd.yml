@@ -65,31 +65,28 @@ jobs:
           echo "Test completed"
 
   deploy:
-    name: Deploy to GCP
+    name: Deploy to Cloud Run
     needs: test
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: Set Up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
 
       - name: Deploy to Cloud Run
-        run: |
-         gcloud run deploy snake-game \
-         --source . \
-         --platform managed \
-         --region us-central1 \
-         --allow-unauthenticated \
-         --timeout=15m \
-         --quiet
+        run: |-
+          gcloud run deploy snake-game \
+            --source . \
+            --region us-central1 \
+            --project ${{ secrets.GCP_PROJECT_ID }} \
+            --allow-unauthenticated
+
 #----------------------------------------------------------------------------------------------------
 
 
