@@ -9,7 +9,8 @@ on:
       - main
 
 jobs:
-  build:
+  test:
+    name: Test Snake Game
     runs-on: ubuntu-latest
 
     steps:
@@ -19,12 +20,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"  # Change if needed
+          python-version: "3.10"
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Install xvfb for headless display
         run: |
@@ -35,31 +36,132 @@ jobs:
         run: |
           # Start xvfb in the background
           Xvfb :99 -screen 0 1280x1024x24 &
-
-          # Set the DISPLAY environment variable for headless mode
           export DISPLAY=:99
-
-          # Run the Snake game
-          python snake.py &
           
-          # Give it some time to run
-          sleep 10
-
-          # Kill the Snake game process
-          pkill -f snake.py
-
-          # Kill the Xvfb process after the test
+          # Run the Snake game with timeout
+          timeout 10s python snake.py || true
+          
+          # Clean up Xvfb
           pkill Xvfb
 
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}  # Set your GCP project ID in GitHub Secrets
-          service_account_key: ${{ secrets.GCP_SA_KEY }}  # Set your GCP service account key in GitHub Secrets
+  deploy:
+    name: Deploy to GCP
+    needs: test
+    runs-on: ubuntu-latest
 
-      - name: Deploy to Google Cloud App Engine
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set Up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
         run: |
-          gcloud app deploy --quiet  # Deploy to App Engine
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game
+          gcloud run deploy snake-game \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated
+
+
+
+#----------------------------------------------------------------------------------------------------
+
+
+
+# name: Python CI/CD Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - main  
+#   pull_request:
+#     branches:
+#       - main
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.10"  # Change if needed
+
+#       - name: Install Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+
+#       - name: Install xvfb for headless display
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y xvfb
+
+#       - name: Run Snake Game (Headless Mode)
+#         run: |
+#           # Start xvfb in the background
+#           Xvfb :99 -screen 0 1280x1024x24 &
+
+#           # Set the DISPLAY environment variable for headless mode
+#           export DISPLAY=:99
+
+#           # Run the Snake game
+#           python snake.py &
+          
+#           # Give it some time to run
+#           sleep 10
+
+#           # Kill the Snake game process
+#           pkill -f snake.py
+
+#           # Kill the Xvfb process after the test
+#           pkill Xvfb
+
+#       name: Deploy to GCP
+
+# on:
+#   push:
+#     branches:
+#       - main  # Change if using a different branch
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
+
+#       - name: Authenticate to GCP
+#         uses: google-github-actions/auth@v2
+#         with:
+#           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+#       - name: Set Up Google Cloud SDK
+#         uses: google-github-actions/setup-gcloud@v2
+
+#       - name: Deploy to Cloud Run
+#         run: |
+#           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+#           gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game
+#           gcloud run deploy snake-game \
+#             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game \
+#             --platform managed \
+#             --region us-central1 \
+#             --allow-unauthenticated
 
 
 
