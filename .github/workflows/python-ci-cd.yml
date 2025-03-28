@@ -84,15 +84,16 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
          gcloud builds submit . \
-         --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game \
-         --timeout=20m
-
+          --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game \
+          --timeout=20m \
+          --async  # Don't wait for build completion
+    
+    
          gcloud run deploy snake-game \
          --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/snake-game \
          --platform managed \
          --region us-central1 \
          --allow-unauthenticated
-
 #----------------------------------------------------------------------------------------------------
 
 
